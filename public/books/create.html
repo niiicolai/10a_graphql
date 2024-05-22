@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Create Book</title>
+  </head>
+  <body>
+    <h1>Create Book</h1>
+    <ul>
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/authors/index.html">Authors</a></li>
+      <li><a href="/books/index.html">Books</a></li>
+    </ul>
+    <div>
+        <label for="title">Title</label>
+        <input type="text" id="title" />
+    </div>
+    <div>
+        <label for="releaseYear">Release Year</label>
+        <select id="releaseYear">
+            <option value="2021">2021</option>
+            <option value="2020">2020</option>
+            <option value="2019">2019</option>
+            <option value="2018">2018</option>
+            <option value="2017">2017</option>
+            <option value="2016">2016</option>
+            <option value="2015">2015</option>
+            <option value="2014">2014</option>
+            <option value="2013">2013</option>
+            <option value="2012">2012</option>
+            <option value="2011">2011</option>
+            <option value="2010">2010</option>
+            <option value="2009">2009</option>
+            <option value="2008">2008</option>
+            <option value="2007">2007</option>
+            <option value="2006">2006</option>
+            <option value="2005">2005</option>
+            <option value="2004">2004</option>
+            <option value="2003">2003</option>
+            <option value="2002">2002</option>
+            <option value="2001">2001</option>
+            <option value="2000">2000</option>
+        </select>
+    </div>
+    <div>
+        <label for="authorId">Author:</label>
+        <select id="authorId"></select>
+    </div>
+    <div>
+        <button id="createBtn">Create</button>
+    </div>
+    <script>
+      (async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        const body = JSON.stringify({ "query": `
+          { 
+            authors { 
+              id 
+              name 
+            }
+          }` 
+        });
+        const response = await fetch('/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body
+        });
+        const { data } = await response.json();
+        const { authors } = data;
+        const authorIdElement = document.getElementById('authorId');
+        authorIdElement.innerHTML = authors.map(author => `
+          <option value="${author.id}">${author.name}</option>
+        `).join('');
+      })();
+
+      async function createBook() {
+        const title = document.getElementById('title').value;
+        const releaseYear = document.getElementById('releaseYear').value;
+        const authorId = document.getElementById('authorId').value;
+        if (!title) {
+          alert('Title is required');
+          return;
+        }
+        if (!releaseYear) {
+          alert('Release Year is required');
+          return;
+        }
+        if (!authorId) {
+          alert('Author is required');
+          return;
+        }
+        const body = JSON.stringify({ "query": `
+          mutation {
+            createBook(title: "${title}", releaseYear: ${releaseYear}, authorId: ${authorId}) {
+              id
+              title
+              releaseYear
+              authorId
+            }
+          }`
+        });
+        await fetch('/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body
+        });
+        location.href = `/books/index.html?message=Book created successfully`;
+      }
+
+      document.getElementById('createBtn').addEventListener('click', createBook);
+    </script>
+  </body>
+</html>

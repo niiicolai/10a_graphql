@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Books</title>
+  </head>
+  <body>
+    <h1>Books</h1>
+    <ul>
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/authors/index.html">Authors</a></li>
+      <li><a href="/books/create.html">New Book</a></li>
+    </ul>
+    <div id="message"></div>
+    <div id="books"></div>
+    <script>
+      (async () => {
+        const fetchBooks = async () => {
+          const body = JSON.stringify({ "query": `
+            { 
+              books { 
+                id 
+                title 
+                releaseYear 
+                authorId 
+                author {
+                  id
+                  name
+                }
+              }
+            }` 
+          });
+          const response = await fetch('/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body
+          });
+          const { data } = await response.json();
+          const { books } = data;
+          const booksElement = document.getElementById('books');
+          booksElement.innerHTML = `
+            <ul>
+              ${books.map(book => `
+                <li>
+                  <a href="/books/show.html?id=${book.id}">
+                    ${book.author.name} (${book.releaseYear}), ${book.title}
+                  </a>
+                  <span> - </span>
+                  <button onclick="editBook(${book.id})">Edit</button>
+                  <button onclick="removeBook(${book.id})">Delete</button>
+                </li>`).join('')}
+            </ul>
+          `;
+        }
+
+        const fetchMessage = async () => {
+          const urlParams = new URLSearchParams(window.location.search);
+          const message = urlParams.get('message');
+          if (message) {
+            const messageElement = document.getElementById('message');
+            messageElement.innerHTML = `<p>${message}</p>`;
+          }
+        }
+
+        await fetchBooks();
+        await fetchMessage();
+      })();
+
+      async function removeBook(id) {
+        const body = JSON.stringify({ "query": `
+          mutation {
+            deleteBook(id: ${id}) {
+              message
+            }
+          }`
+        });
+        const response = await fetch('/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body
+        });
+        const { data } = await response.json();
+        const { message } = data.deleteBook;
+        location.href = `/books/index.html?message=${message}`;
+      }
+
+      function editBook(id) {
+        location.href = `/books/edit.html?id=${id}`;
+      }
+    </script>
+  </body>
+</html>

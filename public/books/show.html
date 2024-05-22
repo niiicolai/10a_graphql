@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Book</title>
+  </head>
+  <body>
+    <h1>Book</h1>
+    <ul>
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/authors/index.html">Authors</a></li>
+      <li><a href="/books/index.html">Books</a></li>
+    </ul>
+    <div>
+        <span>Id: </span>
+        <span id="id">id</span>
+    </div>
+    <div>
+        <span>Title: </span>
+        <span id="title">title</span>
+    </div>
+    <div>
+        <span>Release Year: </span>
+        <span id="releaseYear">releaseYear</span>
+    </div>
+    <div>
+        <span>Author: </span>
+        <span id="author">author</span>
+    </div>
+    <div>
+        <span>Actions: </span>
+        <button onclick="editBook()">Edit</button>
+        <button onclick="removeBook()">Delete</button>
+    </div>
+    <script>
+        let id;
+
+      (async () => {
+        const fetchBook = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            id = urlParams.get('id');
+            const body = JSON.stringify({ "query": `
+            { 
+                book(id: ${id}) { 
+                    id 
+                    title 
+                    releaseYear 
+                    authorId 
+                    author {
+                        id
+                        name
+                    }
+                }
+            }` 
+            });
+            const response = await fetch('/graphql', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body
+            });
+            const { data } = await response.json();
+            const { book } = data;
+            document.getElementById('id').textContent = book.id;
+            document.getElementById('title').textContent = book.title;
+            document.getElementById('releaseYear').textContent = book.releaseYear;
+            document.getElementById('author').textContent = book.author.name;
+        }
+
+        await fetchBook();
+      })();
+
+      async function removeBook() {
+        const body = JSON.stringify({ "query": `
+          mutation {
+            deleteBook(id: ${id}) {
+              message
+            }
+          }`
+        });
+        const response = await fetch('/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body
+        });
+        const { data } = await response.json();
+        const { message } = data.deleteBook;
+        location.href = `/books/index.html?message=${message}`;
+      }
+
+      function editBook() {
+        location.href = `/books/edit.html?id=${id}`;
+      }
+    </script>
+  </body>
+</html>

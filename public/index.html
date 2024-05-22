@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Home</title>
+  </head>
+  <body>
+    <h1>Home</h1>
+    <ul>
+        <li><a href="/books/index.html">Books</a></li>
+        <li><a href="/authors/index.html">Authors</a></li>
+    </ul>
+    <h2>Subscription Log</h2>
+    <div id="log"></div>
+    
+    <script src="https://unpkg.com/graphql-ws/umd/graphql-ws.min.js"></script>
+    <script type="module">
+        const { createClient } = graphqlWs;
+        const addLog = (message) => {
+            const time = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('log');
+            logElement.innerHTML += `<div>${time}: ${message}</div>`;
+        };
+
+        const client = createClient({
+            url: 'ws://localhost:4000/graphql',
+        });
+
+        // subscription
+        (async () => {
+            const subscription = client.iterate({
+                query: 'subscription { bookAdded { id title releaseYear authorId author { id name } } }',
+            });
+            
+            for await (const event of subscription) {
+                addLog(JSON.stringify(event));
+            }
+        })();
+    </script>
+  </body>
+</html>

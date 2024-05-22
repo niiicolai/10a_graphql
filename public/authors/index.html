@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Authors</title>
+  </head>
+  <body>
+    <h1>Authors</h1>
+    <ul>
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/books/index.html">Books</a></li>
+    </ul>
+
+    <div id="authors"></div>
+    <script>
+      (async () => {
+        const body = JSON.stringify({ "query": `
+          { 
+            authors { 
+              id 
+              name 
+              books {
+                id 
+                title 
+                releaseYear 
+                authorId 
+              }
+            }
+          }` 
+        });
+        const response = await fetch('/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body
+        });
+        const { data } = await response.json();
+        const { authors } = data;
+        const authorsElement = document.getElementById('authors');
+        authorsElement.innerHTML = `
+          <ul>
+            ${authors.map(author => `
+              <li>
+                <div>${author.name}</div>
+                <div>
+                  <ul>
+                    ${author.books.map(book => `
+                      <li>
+                        <a href="/books/show.html?id=${book.id}">${book.title} (${book.releaseYear})</a>
+                      </li>`).join('')}
+                  </ul>
+                </div>
+              </li>`).join('')}
+          </ul>
+        `;
+      })();
+    </script>
+  </body>
+</html>
